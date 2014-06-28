@@ -37,9 +37,9 @@ public class SmrControllerBattle : MonoBehaviour {
 		photonView.RPC("clientReady",PhotonTargets.All);
 	}
 	public void battleStart(){
-		if(SmrControllerPlayer.players.Count==1){
-			var npc=playerCreate().GetComponent<SmrControllerPlayer>();
-			SmrControllerPlayer.players[0].party="white";
+		if(playersReady.Count==1){
+			var npc=playerCreate(null).GetComponent<SmrControllerPlayer>();
+			playersReady[0].party="white";
 			npc.party="black";
 			playersReady.Add(npc);
 		}
@@ -65,25 +65,42 @@ public class SmrControllerBattle : MonoBehaviour {
 		photonView.RPC("clientBattleEnd",PhotonTargets.All,winnerParty);
 	}
 	public void cleanPlayers(){
-		foreach(var e in SmrControllerPlayer.players){
-			// PhotonNetwork.Destroy(e.gameObject);
-		}
 	}
-	public GameObject playerMeCreate(){
-		playerMe=playerCreate().GetComponent<SmrControllerPlayer>();
-		return playerMe.gameObject;
-	}
-	public GameObject playerCreate(){
+	public GameObject playerCreate(PhotonPlayer photonPlayer){
 		//GameObject obj=PhotonNetwork.Instantiate(playerPrefab.name,Vector3.zero,playerPrefab.transform.rotation,0);
-		GameObject obj=Instantiate(playerPrefab);
-		var player=obj.GetComponent<SmrControllerPlayer>();
+		var player=Instantiate(playerPrefab) as SmrControllerPlayer;
+		player.photonPlayer=photonPlayer;
+		players.Add(player);
+		// var player=obj.GetComponent<SmrControllerPlayer>();
 		//playerSpawnerAppend(player);
-		return obj;
+		return player.gameObject;
 	}
 	public void playerSpawnerAppend(SmrControllerPlayer player){
 		if(player.spawnerMinion&&player.spawnerHero)return;
 		player.spawnerMinion=Instantiate(spawnerMinion) as SpawnHere;
 		player.spawnerHero=Instantiate(spawnerHero) as SpawnHere;
+	}
+	public void heroMove(Vector3 pos,bool isMove){
+		photonView.RPC("serverHeroMove",PhotonTargets.MasterClient,PhotonNetwork.playerName,pos,isMove);
+	}
+	public void unitHpUpdate(SmrControllerUnit unit,int value){
+		photonView.RPC("serverUnitHpUpdate",PhotonTargets.MasterClient,unit.name,value);
+	}
+	[RPC]public void clientUnitHpUpdate(string unitName,int value){
+
+	}
+	[RPC]public void clientHeroMove(string playerName,Vector3 pos,bool isMove){
+		foreach(var e in SmrControllerPlayer.players.ToArray()){
+			if(e.photonPlayer.name!=playerName)continue;
+			e.heroMove(pos,isMove);
+			break;
+		}
+	}
+	[RPC]void serverUnitHpUpdate(string unitName,int value){
+		photonView.RPC("clientUnitHpUpdate",PhotonTargets.All,unitName,isMove);
+	}
+	[RPC]void serverHeroMove(string playerName,Vector3 pos,bool isMove){		
+		photonView.RPC("clientHeroMove",PhotonTargets.All,playerName,pos,isMove);
 	}
 	[RPC]void serverReady(){
 		photonView.RPC("clientReady",PhotonTargets.All);
@@ -96,11 +113,13 @@ public class SmrControllerBattle : MonoBehaviour {
 		else 							foreach(var e in onDefeat)e.SetActive(true);
 	}
 	List<SmrControllerPlayer> playersReady=new List<SmrControllerPlayer>();
+	List<SmrControllerPlayer> players=new List<SmrControllerPlayer>();
+	List<SmrControllerUnit> units=new List<SmrControllerUnit>();
 	
 	int countWhite=0;
 	int countBlack=0;
 	void Start(){
-		playerMe=playerCreate();
+		playerMe=playerCreate(PhotonNetwork.player).GetComponent<SmrControllerPlayer>();
 		input.player=playerMe;
 		input.enabled=true;
 	}

@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 
 public class SmrControllerPlayer : TRNTH.PoolBase {
-	static public List<SmrControllerPlayer> players=new List<SmrControllerPlayer>();
+	//static public List<SmrControllerPlayer> players=new List<SmrControllerPlayer>();
 	public SmrControllerUnitHero hero;
-	public PhotonView view;
+	public SmrControllerBattle battle;
+	public PhotonPlayer photonPlayer;
 	public SpawnHere spawnerHero;
 	public SpawnHere spawnerMinion;
 	public bool isReady;
@@ -17,13 +18,15 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		base.Awake();
 		players.Add(this);
 		units=new Dictionary<string,SmrControllerUnit>();
-		SmrControllerBattle.ctr.playerSpawnerAppend(this);
+		//SmrControllerBattle.ctr.playerSpawnerAppend(this);
 	}
 	public void heroMove(Vector3 pos,bool isMove){
-		view.RPC("server",PhotonTargets.MasterClient,isMove?"rpcHeroMove":"rpcHeroFiight",pos);
+		if(isMove)rpcHeroMove(pos);
+		else rpcHeroFiight(pos);
+		// view.RPC("server",PhotonTargets.MasterClient,isMove?"rpcHeroMove":"rpcHeroFiight",pos);
 	}
 	public void unitHpUpdate(SmrControllerUnit unit,int value){
-		view.RPC("serverUnitHpUpdate",PhotonTargets.MasterClient,unit.name,value);
+		// view.RPC("serverUnitHpUpdate",PhotonTargets.MasterClient,unit.name,value);
 	}
 	public void battleStart(){
 		isSpawning=true;
@@ -47,7 +50,7 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		var unit=spawner.execute().GetComponent<SmrControllerUnit>();
 		unit.player=this;
 		countSumUnits+=1;
-		unit.name="Unit "+view.viewID +" "+countSumUnits;
+		unit.name="Unit "+(photonPlayer!=null?photonPlayer.name:"npc") +" "+countSumUnits;
 		unit.applyParty(party);
 		units.Add(unit.name,unit);
 		return unit;
@@ -60,10 +63,10 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 	}
 	// RPCs server
 	[RPC]void server(string clientMethod,Vector3 pos){
-		view.RPC(clientMethod,PhotonTargets.All,pos);
+		// view.RPC(clientMethod,PhotonTargets.All,pos);
 	}
 	[RPC]void serverUnitHpUpdate(string key,int value){
-		view.RPC("rpcUnitHpUpdate",PhotonTargets.AllBuffered,key,value);
+		// view.RPC("rpcUnitHpUpdate",PhotonTargets.AllBuffered,key,value);
 	}
 	// RPCs client
 	[RPC]void rpcUnitCreate(string type){}
@@ -101,8 +104,7 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 	TRNTH.Alarm a=new TRNTH.Alarm();
 	int countSumUnits;
 	void lose(){
-		var ctr=SmrControllerBattle.ctr;
-		ctr.lose(this);
+		battle.lose(this);
 		isSpawning=false;
 	}
 	void OnDestroy(){

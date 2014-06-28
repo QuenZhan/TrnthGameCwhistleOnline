@@ -2,6 +2,7 @@
 using System.Collections;
 
 public class SmrControllerAttack : MonoBehaviour {
+	public SmrControllerBattle batlle;
 	public void attack(GameObject[] gobjs){
 		GameObject ofensive=null;
 		GameObject defensive=null;
@@ -18,6 +19,6 @@ public class SmrControllerAttack : MonoBehaviour {
 		if(!ud)return;
 		// Debug.Log("Attack");
 		if(!ud.player)return;
-		ud.player.unitHpUpdate(ud,ud.hp-uo.attackDamage);
+		batlle.unitHpUpdate(ud,ud.hp-uo.attackDamage);
 	}
 }
