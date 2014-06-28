@@ -66,7 +66,7 @@ public class SmrControllerBattle : MonoBehaviour {
 	}
 	public void cleanPlayers(){
 		foreach(var e in SmrControllerPlayer.players){
-			PhotonNetwork.Destroy(e.gameObject);
+			// PhotonNetwork.Destroy(e.gameObject);
 		}
 	}
 	public GameObject playerMeCreate(){
@@ -74,7 +74,8 @@ public class SmrControllerBattle : MonoBehaviour {
 		return playerMe.gameObject;
 	}
 	public GameObject playerCreate(){
-		GameObject obj=PhotonNetwork.Instantiate(playerPrefab.name,Vector3.zero,playerPrefab.transform.rotation,0);
+		//GameObject obj=PhotonNetwork.Instantiate(playerPrefab.name,Vector3.zero,playerPrefab.transform.rotation,0);
+		GameObject obj=Instantiate(playerPrefab);
 		var player=obj.GetComponent<SmrControllerPlayer>();
 		//playerSpawnerAppend(player);
 		return obj;
@@ -99,7 +100,7 @@ public class SmrControllerBattle : MonoBehaviour {
 	int countWhite=0;
 	int countBlack=0;
 	void Start(){
-		playerMeCreate();
+		playerMe=playerCreate();
 		input.player=playerMe;
 		input.enabled=true;
 	}
