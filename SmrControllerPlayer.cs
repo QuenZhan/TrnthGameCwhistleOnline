@@ -23,6 +23,10 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		unit.transform.position=hero.transform.position+Vector3.up*3;
 		return unit;
 	}
+	public SmrControllerUnit unitSpawn(){
+		if(units.Count==0)return unitSpawn(true);
+		else  return minionSpawn();
+	}
 	public SmrControllerUnit unitSpawn(bool isHero){
 		SpawnHere spawner=null;
 		if(isHero)spawner=spawnerHero;
@@ -34,7 +38,7 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		var unit=spawner.execute().GetComponent<SmrControllerUnit>();
 		unit.player=this;
 		countSumUnits+=1;
-		unit.name="Unit "+(photonPlayer!=null?photonPlayer.name:"npc") +" "+countSumUnits;
+		//unit.name="Unit "+(photonPlayer!=null?photonPlayer.name:"npc") +" "+countSumUnits;
 		unit.applyParty(party);
 		units.Add(unit.name,unit);
 		return unit;
@@ -65,9 +69,10 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 	void OnDestroy(){
 	}
 	void Start(){
-		var unit=unitSpawn(true);
+		var unit=battle.unitCreate(name);
+
 		if(!unit){
-			Debug.Log(" create hero failed");
+			Debug.Log(" create hero failed : "+ name);
 			return ;
 		}
 		foreach(var spawner in new SpawnHere[]{spawnerHero,spawnerMinion}){

@@ -2,6 +2,9 @@
 using System.Collections;
 
 public class SmrPhotonEventListener : Photon.MonoBehaviour {
-	public void OnPhotonPlayerConnected(PhotonPlayer player){}
+	public SmrRpcRequester srr;
+	public void OnPhotonPlayerConnected(PhotonPlayer player){
+		srr.requestPlayerJoin(player.ID+"");
+	}
 	public void OnPhotonPlayerDisconnected(PhotonPlayer player){}
 }

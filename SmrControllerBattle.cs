@@ -11,9 +11,15 @@ public class SmrControllerBattle : MonoBehaviour {
 	public GameObject[] onDefeat;
 	[RPC]public SmrControllerUnit unitCreate(string playerName){
 		var player=players.find(playerName);
-		if(player)return null;		
-		var newUnit=player.minionSpawn();
-		units.add(newUnit);
+		Debug.Log(player);
+		
+		if(!player){
+			return null;
+		}
+		var newUnit=player.unitSpawn();
+		Debug.Log(newUnit);
+		if(!newUnit)return null;
+		newUnit.name=units.add(newUnit);
 		return newUnit;
 	}
 	[RPC]public void unitHpUpdate(string playerName,int value){	
@@ -29,11 +35,11 @@ public class SmrControllerBattle : MonoBehaviour {
 	}
 	[RPC]public SmrControllerPlayer playerJoin(string playerName){
 		var player=players.find(playerName);
+		//Debug.Log(playerName);
 		if(player)return player;
 		player=Instantiate(playerPrefab) as SmrControllerPlayer;
 		player.photonPlayer=photonPlayerFind(playerName);		
 		player.name=players.add(playerName,player);
-		player.name=playerName;
 		return player;
 	}
 	[RPC]public void playerLeave(string playerName){	}
@@ -94,6 +100,13 @@ public class SmrControllerBattle : MonoBehaviour {
 		}
 		return players.array.Length==playersReady.Count;
 	}}
+	void playersInitJoin(){
+		foreach(var e in PhotonNetwork.playerList){
+			var player=playerJoin(e.ID+"");
+			if(PhotonNetwork.player.ID==e.ID)playerMe=player;
+		}
+		
+	}
 	int countWhite=0;
 	int countBlack=0;
 
@@ -113,13 +126,14 @@ public class SmrControllerBattle : MonoBehaviour {
 		string winnerParty="--";
 		if(countBlack==0)winnerParty="white";
 		if(countWhite==0)winnerParty="black";
-		photonView.RPC("clientBattleEnd",PhotonTargets.All,winnerParty);
+		photonView.RPC("battleEnd",PhotonTargets.All,winnerParty);
 	}
 
 	PhotonPlayer photonPlayerFind(string name){return null;}
 	void Awake(){
 	}
 	void Start(){
+		playersInitJoin();
 		// playerMe=playerJoin(PhotonNetwork.player.name).GetComponent<SmrControllerPlayer>();
 	}
 }
