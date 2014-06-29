@@ -2,131 +2,86 @@
 using System.Collections.Generic;
 
 public class SmrControllerBattle : MonoBehaviour {
-	static public SmrControllerBattle ctr;
 	public SmrControllerPlayer playerMe;
 	public SmrControllerPlayer playerPrefab;
-	public SmrInputToggler input;
+	public SmrRpcRequester sr;
 	public PhotonView photonView;
-	public SpawnHere spawnerHero;
-	public SpawnHere spawnerMinion;
 	public GameObject[] onBattleStart;
-	public GameObject[] onCountDownStart;
-	public GameObject[] onCountDownCancel;
 	public GameObject[] onVictory;
 	public GameObject[] onDefeat;
-	public void applyReady(SmrControllerPlayer player){
-		if(playersReady.Contains(player))return;
-		playersReady.Add(player);
-		if(isPlayersReady()){
-			countDownStart();
+	[RPC]public SmrControllerUnit unitCreate(string playerName){
+		var player=players.find(playerName);
+		if(player)return null;		
+		var newUnit=player.minionSpawn();
+		units.add(newUnit);
+		return newUnit;
+	}
+	[RPC]public void unitHpUpdate(string playerName,int value){	
+		var unit=units.find(playerName);
+		if(!unit)return;
+		unit.hp=value;
+		unit.hurt();
+		if(value<1){
+			unit.die();
+			if(unit==unit.player.hero)disqualify(unit.player);
 		}
+		Debug.Log("hp : "+value);
 	}
-	public void cancelReady(SmrControllerPlayer player){
-		playersReady.Remove(player);
-		countDownCancel();
+	[RPC]public SmrControllerPlayer playerJoin(string playerName){
+		var player=players.find(playerName);
+		if(player)return player;
+		player=Instantiate(playerPrefab) as SmrControllerPlayer;
+		player.photonPlayer=photonPlayerFind(playerName);		
+		player.name=players.add(playerName,player);
+		player.name=playerName;
+		return player;
 	}
-	public void countDownCancel(){
-		foreach(var e in onCountDownCancel){e.SetActive(true);}
+	[RPC]public void playerLeave(string playerName){	}
+	[RPC]public void playerMove(string playerName,Vector3 pos){
+		var player=players.find(playerName);
+		if(!player){
+			Debug.Log("no player : "+playerName);
+			return;
+		}
+		player.heroMove(pos);
 	}
-	public void countDownStart(){
-		foreach(var e in onCountDownStart){e.SetActive(true);}
+	[RPC]public void playerFight(string playerName,Vector3 pos){
+		var player=players.find(playerName);
+		if(!player){
+			Debug.Log("no player : "+playerName);
+			return;
+		}
+		player.heroFight(pos);
 	}
-	public void countDownFinish(){
-		if(!PhotonNetwork.isMasterClient)return;
-		//photonView.RPC("serverReady",PhotonTargets.MasterClient);
-		photonView.RPC("clientReady",PhotonTargets.All);
-	}
-	public void battleStart(){
-		if(playersReady.Count==1){
-			var npc=playerCreate(null).GetComponent<SmrControllerPlayer>();
-			playersReady[0].party="white";
+	[RPC]public void battleStart(){
+		if(players.array.Length==1){
+			var npc=playerJoin("npc");
+			playerMe.party="white";
 			npc.party="black";
-			playersReady.Add(npc);
 		}
-		foreach(var e in playersReady.ToArray()){
+		foreach(var e in players.array){
 			switch(e.party){
 			case"black":countBlack+=1;break;
 			case"white":countWhite+=1;break;
 			}
 			e.applyParty();
-			e.battleStart();
+			e.isSpawning=true;
 		}
 		foreach(var e in onBattleStart){e.SetActive(true);}
-	}
-	public void lose(SmrControllerPlayer player){
-		switch(player.party){
-		case"black":countBlack-=1;break;
-		case"white":countWhite-=1;break;
-		}
-		if(!PhotonNetwork.isMasterClient)return;
-		string winnerParty="--";
-		if(countBlack==0)winnerParty="white";
-		if(countWhite==0)winnerParty="black";
-		photonView.RPC("clientBattleEnd",PhotonTargets.All,winnerParty);
-	}
-	public void cleanPlayers(){
-	}
-	public GameObject playerCreate(PhotonPlayer photonPlayer){
-		//GameObject obj=PhotonNetwork.Instantiate(playerPrefab.name,Vector3.zero,playerPrefab.transform.rotation,0);
-		var player=Instantiate(playerPrefab) as SmrControllerPlayer;
-		player.photonPlayer=photonPlayer;
-		players.Add(player);
-		// var player=obj.GetComponent<SmrControllerPlayer>();
-		//playerSpawnerAppend(player);
-		return player.gameObject;
-	}
-	public void playerSpawnerAppend(SmrControllerPlayer player){
-		if(player.spawnerMinion&&player.spawnerHero)return;
-		player.spawnerMinion=Instantiate(spawnerMinion) as SpawnHere;
-		player.spawnerHero=Instantiate(spawnerHero) as SpawnHere;
-	}
-	public void heroMove(Vector3 pos,bool isMove){
-		photonView.RPC("serverHeroMove",PhotonTargets.MasterClient,PhotonNetwork.playerName,pos,isMove);
-	}
-	public void unitHpUpdate(SmrControllerUnit unit,int value){
-		photonView.RPC("serverUnitHpUpdate",PhotonTargets.MasterClient,unit.name,value);
-	}
-	[RPC]public void clientUnitHpUpdate(string unitName,int value){
 
 	}
-	[RPC]public void clientHeroMove(string playerName,Vector3 pos,bool isMove){
-		foreach(var e in SmrControllerPlayer.players.ToArray()){
-			if(e.photonPlayer.name!=playerName)continue;
-			e.heroMove(pos,isMove);
-			break;
-		}
-	}
-	[RPC]void serverUnitHpUpdate(string unitName,int value){
-		photonView.RPC("clientUnitHpUpdate",PhotonTargets.All,unitName,isMove);
-	}
-	[RPC]void serverHeroMove(string playerName,Vector3 pos,bool isMove){		
-		photonView.RPC("clientHeroMove",PhotonTargets.All,playerName,pos,isMove);
-	}
-	[RPC]void serverReady(){
-		photonView.RPC("clientReady",PhotonTargets.All);
-	}
-	[RPC]void clientReady(){
-		battleStart();
-	}
-	[RPC]void clientBattleEnd(string winnerParty){
+	[RPC]public void battleEnd(string winnerParty){
 		if(playerMe.party==winnerParty)	foreach(var e in onVictory)e.SetActive(true);
 		else 							foreach(var e in onDefeat)e.SetActive(true);
 	}
-	List<SmrControllerPlayer> playersReady=new List<SmrControllerPlayer>();
-	List<SmrControllerPlayer> players=new List<SmrControllerPlayer>();
-	List<SmrControllerUnit> units=new List<SmrControllerUnit>();
-	
-	int countWhite=0;
-	int countBlack=0;
-	void Start(){
-		playerMe=playerCreate(PhotonNetwork.player).GetComponent<SmrControllerPlayer>();
-		input.player=playerMe;
-		input.enabled=true;
+	public void applyReady(SmrControllerPlayer player){
+		if(playersReady.Contains(player))return;
+		playersReady.Add(player);
 	}
-	void Awake(){
-		ctr=this;
+	public void cancelReady(SmrControllerPlayer player){
+		playersReady.Remove(player);	
 	}
-	bool isPlayersReady(){
+	public bool isReady{get{
 		var ints=new int[]{0,0};
 		foreach(var e in playersReady){
 			switch(e.party){
@@ -137,6 +92,34 @@ public class SmrControllerBattle : MonoBehaviour {
 		if(playersReady.Count!=1){
 			if(ints[0]==0||ints[1]==0)return false;			
 		}
-		return SmrControllerPlayer.players.Count==playersReady.Count;
+		return players.array.Length==playersReady.Count;
+	}}
+	int countWhite=0;
+	int countBlack=0;
+
+	SmrContainer<SmrControllerPlayer> players=new SmrContainer<SmrControllerPlayer>();
+	SmrContainer<SmrControllerUnit> units=new SmrContainer<SmrControllerUnit>();
+
+	List<SmrControllerPlayer> playersReady=new List<SmrControllerPlayer>();
+
+
+	void disqualify(SmrControllerPlayer player){
+		player.isSpawning=false;
+		switch(player.party){
+		case"black":countBlack-=1;break;
+		case"white":countWhite-=1;break;
+		}
+		if(!PhotonNetwork.isMasterClient)return;
+		string winnerParty="--";
+		if(countBlack==0)winnerParty="white";
+		if(countWhite==0)winnerParty="black";
+		photonView.RPC("clientBattleEnd",PhotonTargets.All,winnerParty);
+	}
+
+	PhotonPlayer photonPlayerFind(string name){return null;}
+	void Awake(){
+	}
+	void Start(){
+		// playerMe=playerJoin(PhotonNetwork.player.name).GetComponent<SmrControllerPlayer>();
 	}
 }

@@ -5,6 +5,7 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 	//static public List<SmrControllerPlayer> players=new List<SmrControllerPlayer>();
 	public SmrControllerUnitHero hero;
 	public SmrControllerBattle battle;
+	public SmrRpcRequester sr;
 	public PhotonPlayer photonPlayer;
 	public SpawnHere spawnerHero;
 	public SpawnHere spawnerMinion;
@@ -13,24 +14,7 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 	public int money;
 	public int leadership=3;
 	public string party;
-	public Dictionary<string,SmrControllerUnit> units;
-	public override void Awake(){
-		base.Awake();
-		players.Add(this);
-		units=new Dictionary<string,SmrControllerUnit>();
-		//SmrControllerBattle.ctr.playerSpawnerAppend(this);
-	}
-	public void heroMove(Vector3 pos,bool isMove){
-		if(isMove)rpcHeroMove(pos);
-		else rpcHeroFiight(pos);
-		// view.RPC("server",PhotonTargets.MasterClient,isMove?"rpcHeroMove":"rpcHeroFiight",pos);
-	}
-	public void unitHpUpdate(SmrControllerUnit unit,int value){
-		// view.RPC("serverUnitHpUpdate",PhotonTargets.MasterClient,unit.name,value);
-	}
-	public void battleStart(){
-		isSpawning=true;
-	}
+	public Dictionary<string,SmrControllerUnit> units=new Dictionary<string,SmrControllerUnit>();
 	[ContextMenu ("minionSpawn")]
 	public SmrControllerUnit minionSpawn(){
 		if(units.Count>=leadership)return null;		
@@ -61,56 +45,24 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 			e.applyParty(party);
 		}
 	}
-	// RPCs server
-	[RPC]void server(string clientMethod,Vector3 pos){
-		// view.RPC(clientMethod,PhotonTargets.All,pos);
-	}
-	[RPC]void serverUnitHpUpdate(string key,int value){
-		// view.RPC("rpcUnitHpUpdate",PhotonTargets.AllBuffered,key,value);
-	}
-	// RPCs client
-	[RPC]void rpcUnitCreate(string type){}
-	[RPC]void rpcUnitHpUpdate(string key,int value){
-		if(!units.ContainsKey(key))return;
-		var unit=units[key];
-		if(!unit)return;
-		unit.hp=value;
-		unit.hurt();
-		if(value<1){
-			unit.die();
-			units.Remove(unit.name);
-			if(unit==hero)lose();
-		}
-		Debug.Log("hp : "+value);
-		// if(index<0||index>=units.Count)return;
-	}
-	[RPC]void rpcHeroMove(Vector3 pos){
+	public void heroMove(Vector3 pos){
 		this.pos=pos;
 		cHero.targetPersitant=gameObject;
 		hero.toggleMove=true;
 		heroConstraint.target=gameObject.transform;
 	}
-	[RPC]void rpcHeroFiight(Vector3 pos){
+	public void heroFight(Vector3 pos){
 		this.pos=pos;
 		cHero.targetPersitant=null;
 		hero.toggleMove=false;
-	}
-	[RPC]void rpcReadyUpdate(bool isReady){
-
 	}
 	// private
 	TrnthCreature cHero;
 	PathologicalGames.SmoothLookAtConstraint heroConstraint;
 	TRNTH.Alarm a=new TRNTH.Alarm();
 	int countSumUnits;
-	void lose(){
-		battle.lose(this);
-		isSpawning=false;
-	}
+
 	void OnDestroy(){
-		players.Remove(this);
-		//PhotonNetwork.Destroy(gameObject);
-		// if(hero)Despawn(hero.gameObject);
 	}
 	void Start(){
 		var unit=unitSpawn(true);
@@ -131,8 +83,8 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 	void Update(){
 		if(isSpawning){
 			a.routine(5,delegate(){
-					minionSpawn();			
-				});			
+				sr.requestUnitCreate(name);
+			});			
 		}
 	}
 }
