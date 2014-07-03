@@ -6,15 +6,23 @@ public class SmrControllerUnit : MonoBehaviour {
 	public int hp=10;
 	public int attackDamage=1;
 	public string type;
+	public string surface="move";
+	public GameObject target;
 	public GameObject[] whileMoving;
 	public GameObject[] whileFighting;
 	public GameObject[] whileHurt;
 	public GameObject[] whileDead;
 	public GameObject[] attackers;
 	public GameObject[] attackReceivers;
+	public string party{
+		get{return _party;}
+		set{applyParty(value);}
+
+	}
 	public void applyParty(string party){
 		int lAttacker=20;
 		int lReceiver=20;
+		_party=party;
 		switch(party){
 		case"black":
 			lAttacker=20;
@@ -33,8 +41,10 @@ public class SmrControllerUnit : MonoBehaviour {
 			foreach(var e in whileMoving){e.SetActive(false);}
 			foreach(var e in whileFighting){e.SetActive(false);}
 			if(value){
+				surface="move";
 				foreach(var e in whileMoving){e.SetActive(true);}
 			}else {
+				surface="fight";
 				foreach(var e in whileFighting){e.SetActive(true);}
 			}
 		}
@@ -50,4 +60,5 @@ public class SmrControllerUnit : MonoBehaviour {
 		}
 		
 	}
+	string _party;
 }

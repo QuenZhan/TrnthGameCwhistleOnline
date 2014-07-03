@@ -9,21 +9,22 @@ public class SmrControllerBattle : MonoBehaviour {
 	public GameObject[] onBattleStart;
 	public GameObject[] onVictory;
 	public GameObject[] onDefeat;
+	public GameObject locationBlack;
+	public GameObject locationWhite;
 	[RPC]public SmrControllerUnit unitCreate(string playerName){
 		var player=players.find(playerName);
-		Debug.Log(player);
-		
+		//Debug.Log(player);		
 		if(!player){
 			return null;
 		}
 		var newUnit=player.unitSpawn();
-		Debug.Log(newUnit);
+		//Debug.Log(newUnit);
 		if(!newUnit)return null;
 		newUnit.name=units.add(newUnit);
 		return newUnit;
 	}
-	[RPC]public void unitHpUpdate(string playerName,int value){	
-		var unit=units.find(playerName);
+	[RPC]public void unitHpUpdate(string name,int value){	
+		var unit=units.find(name);
 		if(!unit)return;
 		unit.hp=value;
 		unit.hurt();
@@ -31,15 +32,37 @@ public class SmrControllerBattle : MonoBehaviour {
 			unit.die();
 			if(unit==unit.player.hero)disqualify(unit.player);
 		}
-		Debug.Log("hp : "+value);
+		// Debug.Log("hp : "+value);
+	}
+	[RPC]public	void unitPosition(string name,Vector3 pos){
+		var unit=units.find(name);
+		if(!unit)return;
+		var dvec=unit.transform.position-pos;
+		if(dvec.magnitude>1)unit.transform.position=pos;
 	}
 	[RPC]public SmrControllerPlayer playerJoin(string playerName){
+		Debug.Log(playerName);
 		var player=players.find(playerName);
-		//Debug.Log(playerName);
 		if(player)return player;
 		player=Instantiate(playerPrefab) as SmrControllerPlayer;
 		player.photonPlayer=photonPlayerFind(playerName);		
 		player.name=players.add(playerName,player);
+		if(player.name==PhotonNetwork.player.ID+"")playerMe=player;
+		switch(players.array.Length%2){
+		case 0:
+			player.party="white";
+			player.transform.position=locationWhite.transform.position;
+			countWhite+=1;
+			break;
+		case 1:
+			player.party="black";
+			player.transform.position=locationBlack.transform.position;
+			countBlack+=1;
+			break;
+		}
+		player.applyParty();
+		player.isSpawning=true;
+
 		return player;
 	}
 	[RPC]public void playerLeave(string playerName){	}
@@ -60,6 +83,7 @@ public class SmrControllerBattle : MonoBehaviour {
 		player.heroFight(pos);
 	}
 	[RPC]public void battleStart(){
+		return ;
 		if(players.array.Length==1){
 			var npc=playerJoin("npc");
 			playerMe.party="white";
@@ -74,7 +98,6 @@ public class SmrControllerBattle : MonoBehaviour {
 			e.isSpawning=true;
 		}
 		foreach(var e in onBattleStart){e.SetActive(true);}
-
 	}
 	[RPC]public void battleEnd(string winnerParty){
 		if(playerMe.party==winnerParty)	foreach(var e in onVictory)e.SetActive(true);
@@ -100,12 +123,10 @@ public class SmrControllerBattle : MonoBehaviour {
 		}
 		return players.array.Length==playersReady.Count;
 	}}
-	void playersInitJoin(){
-		foreach(var e in PhotonNetwork.playerList){
-			var player=playerJoin(e.ID+"");
-			if(PhotonNetwork.player.ID==e.ID)playerMe=player;
+	public void syncUnitsPosition(){
+		foreach(var e in units.array){
+			sr.requestUnitPosition(e.name,e.transform.position);
 		}
-		
 	}
 	int countWhite=0;
 	int countBlack=0;
@@ -133,7 +154,9 @@ public class SmrControllerBattle : MonoBehaviour {
 	void Awake(){
 	}
 	void Start(){
-		playersInitJoin();
-		// playerMe=playerJoin(PhotonNetwork.player.name).GetComponent<SmrControllerPlayer>();
+		Network.isMessageQueueRunning=true;
+		Debug.Log("enter Room");
+		sr.requestPlayerJoin(PhotonNetwork.player.ID+"");
+		if(PhotonNetwork.isMasterClient)sr.requestPlayerJoin("npc");
 	}
 }

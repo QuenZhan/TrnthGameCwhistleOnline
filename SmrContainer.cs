@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 public class SmrContainer<T> where T:Object{
 	public T find(string name){
-		Debug.Log(dict.ContainsKey(name));
+		//Debug.Log(dict.ContainsKey(name));
 		if(!dict.ContainsKey(name))return null;
-		Debug.Log(dict[name]);
+		//Debug.Log(dict[name]);
 
 		return dict[name];
 	}
@@ -17,7 +17,7 @@ public class SmrContainer<T> where T:Object{
 		}
 	}
 	public string add(string key,T e){
-		Debug.Log(key);
+		//Debug.Log(key);
 		dict.Add(key,e);
 		count+=1;
 		return key;

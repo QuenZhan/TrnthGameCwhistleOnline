@@ -2,6 +2,7 @@
 using System.Collections;
 
 public class SmrControllerUnitMinions : SmrControllerUnit{
+	public float cdThink;
 	public void reset(){
 		hp=10;
 	}
@@ -14,5 +15,17 @@ public class SmrControllerUnitMinions : SmrControllerUnit{
 	}
 	void OnSpawned(){
 		reset();
+	}
+	void Start(){
+		Invoke("think",cdThink);
+	}
+	void think(){
+		switch(surface){
+		case"move":
+			target.transform.position=hero.transform.position+Random.insideUnitSphere*2;
+			break;
+		}
+		//target.transform.position=
+		if(enabled)Invoke("think",cdThink);
 	}
 }

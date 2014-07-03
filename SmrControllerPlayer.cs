@@ -14,16 +14,21 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 	public int money;
 	public int leadership=3;
 	public string party;
-	public Dictionary<string,SmrControllerUnit> units=new Dictionary<string,SmrControllerUnit>();
+	public List<SmrControllerUnit> units=new List<SmrControllerUnit>();
 	[ContextMenu ("minionSpawn")]
 	public SmrControllerUnit minionSpawn(){
-		if(units.Count>=leadership)return null;		
+		//if(units.Count>=leadership)return null;		
 		if(!hero)return null;
 		var unit=unitSpawn(false);
 		unit.transform.position=hero.transform.position+Vector3.up*3;
 		return unit;
 	}
 	public SmrControllerUnit unitSpawn(){
+		// var list=new List<SmrControllerUnit>();
+		// foreach(var e in units){
+		// 	if(e.gameObject.activeInHierarchy)list.Add(e);
+		// }
+		// units=list;
 		if(units.Count==0)return unitSpawn(true);
 		else  return minionSpawn();
 	}
@@ -40,12 +45,12 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		countSumUnits+=1;
 		//unit.name="Unit "+(photonPlayer!=null?photonPlayer.name:"npc") +" "+countSumUnits;
 		unit.applyParty(party);
-		units.Add(unit.name,unit);
+		units.Add(unit);
 		return unit;
 	}
 	[ContextMenu ("applyParty")]
 	public void applyParty(){
-		foreach(var e in units.Values){
+		foreach(var e in units){
 			e.applyParty(party);
 		}
 	}
@@ -84,12 +89,15 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		cHero=hero.GetComponent<TrnthCreature>();
 		heroConstraint=hero.GetComponent<PathologicalGames.SmoothLookAtConstraint>();
 		heroConstraint.target=this.transform;
+		Invoke("spawn",0);
 	}
-	void Update(){
-		if(isSpawning){
-			a.routine(5,delegate(){
-				sr.requestUnitCreate(name);
-			});			
+	void spawn(){
+		var list=new List<SmrControllerUnit>();
+		foreach(var e in units){
+			if(e.gameObject.activeInHierarchy)list.Add(e);
 		}
+		units=list;
+		if(units.Count<leadership)sr.requestUnitCreate(name);
+		if(isSpawning)Invoke("spawn",5);
 	}
 }
