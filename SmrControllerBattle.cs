@@ -13,7 +13,7 @@ public class SmrControllerBattle : MonoBehaviour {
 	public GameObject locationWhite;
 	[RPC]public SmrControllerUnit unitCreate(string playerName){
 		var player=players.find(playerName);
-		//Debug.Log(player);		
+		Debug.Log("unit create "+playerName);
 		if(!player){
 			return null;
 		}
@@ -21,6 +21,7 @@ public class SmrControllerBattle : MonoBehaviour {
 		//Debug.Log(newUnit);
 		if(!newUnit)return null;
 		newUnit.name=units.add(newUnit);
+		//if(player.units.Count==1)player.heroSetup(newUnit);
 		return newUnit;
 	}
 	[RPC]public void unitHpUpdate(string name,int value){	
@@ -150,13 +151,17 @@ public class SmrControllerBattle : MonoBehaviour {
 		photonView.RPC("battleEnd",PhotonTargets.All,winnerParty);
 	}
 
-	PhotonPlayer photonPlayerFind(string name){return null;}
+	PhotonPlayer photonPlayerFind(string name){
+		return null;
+	}
 	void Awake(){
 	}
 	void Start(){
-		Network.isMessageQueueRunning=true;
-		Debug.Log("enter Room");
-		sr.requestPlayerJoin(PhotonNetwork.player.ID+"");
-		if(PhotonNetwork.isMasterClient)sr.requestPlayerJoin("npc");
+		//Network.isMessageQueueRunning=true;
+		Debug.Log("enter Room "+PhotonNetwork.player.ID);
+		if(PhotonNetwork.isMasterClient){
+			sr.requestPlayerJoin("npc");
+			sr.requestPlayerJoin(PhotonNetwork.player.ID+"");
+		}
 	}
 }

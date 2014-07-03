@@ -20,15 +20,10 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		//if(units.Count>=leadership)return null;		
 		if(!hero)return null;
 		var unit=unitSpawn(false);
-		unit.transform.position=hero.transform.position+Vector3.up*3;
+		//unit.transform.position=hero.transform.position+Vector3.up*3;
 		return unit;
 	}
 	public SmrControllerUnit unitSpawn(){
-		// var list=new List<SmrControllerUnit>();
-		// foreach(var e in units){
-		// 	if(e.gameObject.activeInHierarchy)list.Add(e);
-		// }
-		// units=list;
 		if(units.Count==0)return unitSpawn(true);
 		else  return minionSpawn();
 	}
@@ -45,6 +40,7 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		countSumUnits+=1;
 		//unit.name="Unit "+(photonPlayer!=null?photonPlayer.name:"npc") +" "+countSumUnits;
 		unit.applyParty(party);
+		if(isHero)heroSetup(unit);
 		units.Add(unit);
 		return unit;
 	}
@@ -65,6 +61,17 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		cHero.targetPersitant=null;
 		hero.toggleMove=false;
 	}
+	public void heroSetup(SmrControllerUnit unit){
+		hero=unit.GetComponent<SmrControllerUnitHero>();
+		hero.transform.position=transform.position+Vector3.up*3;
+		cHero=hero.GetComponent<TrnthCreature>();
+		heroConstraint=hero.GetComponent<PathologicalGames.SmoothLookAtConstraint>();
+		heroConstraint.target=this.transform;
+		foreach(var spawner in new SpawnHere[]{spawnerHero,spawnerMinion}){
+			spawner.transform.parent=hero.transform;			
+			spawner.transform.localPosition=Vector3.up*3;
+		}
+	}
 	// private
 	TrnthCreature cHero;
 	PathologicalGames.SmoothLookAtConstraint heroConstraint;
@@ -73,23 +80,14 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 
 	void OnDestroy(){
 	}
+	public override void Awake(){
+		// foreach(var spawner in new SpawnHere[]{spawnerHero,spawnerMinion}){
+		// 	spawner.transform.position=Vector3.up*3+pos;
+		// 	spawner.transform.parent=tra;			
+		// }
+	}
 	void Start(){
-		var unit=battle.unitCreate(name);
-
-		if(!unit){
-			Debug.Log(" create hero failed : "+ name);
-			return ;
-		}
-		foreach(var spawner in new SpawnHere[]{spawnerHero,spawnerMinion}){
-			spawner.transform.position=Vector3.up*3+pos;
-			spawner.transform.parent=tra;			
-		}
-		hero=unit.GetComponent<SmrControllerUnitHero>();
-		hero.transform.position=transform.position+Vector3.up*3;
-		cHero=hero.GetComponent<TrnthCreature>();
-		heroConstraint=hero.GetComponent<PathologicalGames.SmoothLookAtConstraint>();
-		heroConstraint.target=this.transform;
-		Invoke("spawn",0);
+		Invoke("spawn",0);		
 	}
 	void spawn(){
 		var list=new List<SmrControllerUnit>();

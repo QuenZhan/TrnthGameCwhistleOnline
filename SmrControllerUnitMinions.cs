@@ -22,7 +22,7 @@ public class SmrControllerUnitMinions : SmrControllerUnit{
 	void think(){
 		switch(surface){
 		case"move":
-			target.transform.position=hero.transform.position+Random.insideUnitSphere*2;
+			target.transform.position=hero.transform.position+Random.insideUnitSphere*0;
 			break;
 		}
 		//target.transform.position=

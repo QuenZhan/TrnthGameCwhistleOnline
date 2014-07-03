@@ -6,6 +6,7 @@ public class SmrPhotonEventListener : Photon.MonoBehaviour {
 	public SmrRpcRequester srr;
 	public void OnPhotonPlayerConnected(PhotonPlayer player){
 		battle.syncUnitsPosition();
+		srr.requestPlayerJoin(player.ID+"");
 	}
 	public void OnPhotonPlayerDisconnected(PhotonPlayer player){}
 }
