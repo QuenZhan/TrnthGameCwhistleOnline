@@ -17,11 +17,11 @@ public class SmrControllerBattle : MonoBehaviour {
 		if(!player){
 			return null;
 		}
+		if(isFull(player.party))return null;
 		var newUnit=player.unitSpawn();
-		//Debug.Log(newUnit);
 		if(!newUnit)return null;
+		units.trim();
 		newUnit.name=units.add(newUnit);
-		//if(player.units.Count==1)player.heroSetup(newUnit);
 		return newUnit;
 	}
 	[RPC]public void unitHpUpdate(string name,int value){	
@@ -63,7 +63,7 @@ public class SmrControllerBattle : MonoBehaviour {
 		}
 		player.applyParty();
 		player.isSpawning=true;
-
+		if(players.array.Length<3)player.leadership=10;
 		return player;
 	}
 	[RPC]public void playerLeave(string playerName){	}
@@ -82,23 +82,6 @@ public class SmrControllerBattle : MonoBehaviour {
 			return;
 		}
 		player.heroFight(pos);
-	}
-	[RPC]public void battleStart(){
-		return ;
-		if(players.array.Length==1){
-			var npc=playerJoin("npc");
-			playerMe.party="white";
-			npc.party="black";
-		}
-		foreach(var e in players.array){
-			switch(e.party){
-			case"black":countBlack+=1;break;
-			case"white":countWhite+=1;break;
-			}
-			e.applyParty();
-			e.isSpawning=true;
-		}
-		foreach(var e in onBattleStart){e.SetActive(true);}
 	}
 	[RPC]public void battleEnd(string winnerParty){
 		if(playerMe.party==winnerParty)	foreach(var e in onVictory)e.SetActive(true);
@@ -137,7 +120,13 @@ public class SmrControllerBattle : MonoBehaviour {
 
 	List<SmrControllerPlayer> playersReady=new List<SmrControllerPlayer>();
 
-
+	bool isFull(string party){
+		int count=0;
+		foreach(SmrControllerUnit e in units.array){
+			if(e.party==party)count+=1;
+		}
+		return count>=10;
+	}
 	void disqualify(SmrControllerPlayer player){
 		player.isSpawning=false;
 		switch(player.party){
@@ -160,7 +149,8 @@ public class SmrControllerBattle : MonoBehaviour {
 		//Network.isMessageQueueRunning=true;
 		Debug.Log("enter Room "+PhotonNetwork.player.ID);
 		if(PhotonNetwork.isMasterClient){
-			sr.requestPlayerJoin("npc");
+			sr.requestPlayerJoin("npc1");
+			sr.requestPlayerJoin("npc2");
 			sr.requestPlayerJoin(PhotonNetwork.player.ID+"");
 		}
 	}

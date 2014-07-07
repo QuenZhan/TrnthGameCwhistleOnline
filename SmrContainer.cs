@@ -1,12 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class SmrContainer<T> where T:Object{
+public class SmrContainer<T> where T:MonoBehaviour{
 	public T find(string name){
-		//Debug.Log(dict.ContainsKey(name));
 		if(!dict.ContainsKey(name))return null;
-		//Debug.Log(dict[name]);
-
 		return dict[name];
 	}
 	public T[] array{
@@ -17,13 +14,19 @@ public class SmrContainer<T> where T:Object{
 		}
 	}
 	public string add(string key,T e){
-		//Debug.Log(key);
 		dict.Add(key,e);
 		count+=1;
 		return key;
 	}
 	public string add(T e){
 		return add(typeof(T).Name+"_"+count,e);
+	}
+	public void trim(){
+		var dict=new Dictionary<string,T>();
+		foreach(KeyValuePair<string, T> e in this.dict){
+			if(e.Value&&e.Value.gameObject.activeInHierarchy)dict.Add(e.Key,e.Value);
+		}
+		this.dict=dict;
 	}
 	Dictionary<string,T> dict=new Dictionary<string,T>();
 	int count=0;

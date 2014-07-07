@@ -28,6 +28,7 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		else  return minionSpawn();
 	}
 	public SmrControllerUnit unitSpawn(bool isHero){
+		if(!isSpawning)return null;
 		SpawnHere spawner=null;
 		if(isHero)spawner=spawnerHero;
 		else spawner=spawnerMinion;

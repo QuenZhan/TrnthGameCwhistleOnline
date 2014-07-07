@@ -19,7 +19,7 @@ public class SmrControllerUnitMinions : SmrControllerUnit{
 	void Start(){
 		Invoke("think",cdThink);
 	}
-	void think(){
+	public virtual void think(){
 		switch(surface){
 		case"move":
 			target.transform.position=hero.transform.position+Random.insideUnitSphere*0;

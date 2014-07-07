@@ -2,6 +2,7 @@
 using System.Collections;
 
 public class SmrControllerUnit : MonoBehaviour {
+	public SmrControllerBattle battle;
 	public SmrControllerPlayer player;
 	public int hp=10;
 	public int attackDamage=1;
