@@ -6,18 +6,15 @@ public class SmrControllerUnitMinions : SmrControllerUnit{
 	public void reset(){
 		hp=10;
 	}
-	public GameObject hero{
+	public SmrControllerUnitHero hero{
 		get{
 			if(!player)return null;
 			if(!player.hero)return null;
-			return player.hero.gameObject;
+			return player.hero;
 		}
 	}
-	void OnSpawned(){
-		reset();
-	}
-	void Start(){
-		Invoke("think",cdThink);
+	public virtual void setup(SmrControllerUnitHero hero){
+		
 	}
 	public virtual void think(){
 		switch(surface){
@@ -27,5 +24,12 @@ public class SmrControllerUnitMinions : SmrControllerUnit{
 		}
 		//target.transform.position=
 		if(enabled)Invoke("think",cdThink);
+	}
+
+	void OnSpawned(){
+		reset();
+	}
+	void Start(){
+		Invoke("think",cdThink);
 	}
 }

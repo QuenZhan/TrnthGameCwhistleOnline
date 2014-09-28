@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class SmrControllerBattle : MonoBehaviour {
 	public SmrControllerPlayer playerMe;
@@ -121,11 +122,11 @@ public class SmrControllerBattle : MonoBehaviour {
 	List<SmrControllerPlayer> playersReady=new List<SmrControllerPlayer>();
 
 	bool isFull(string party){
-		int count=0;
-		foreach(SmrControllerUnit e in units.array){
-			if(e.party==party)count+=1;
-		}
-		return count>=10;
+		units.trim();
+		var q=from e in units.array
+			where (e.party==party)
+			select e;
+		return q.ToArray().Length>=10;
 	}
 	void disqualify(SmrControllerPlayer player){
 		player.isSpawning=false;

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class SmrControllerUnit : MonoBehaviour {
+public class SmrControllerUnit : TRNTH.PoolBase {
 	public SmrControllerBattle battle;
 	public SmrControllerPlayer player;
 	public int hp=10;

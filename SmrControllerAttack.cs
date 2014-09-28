@@ -19,6 +19,7 @@ public class SmrControllerAttack : MonoBehaviour {
 		var container=ofensive.GetComponent<SmrUnitContainer>();
 		if(!container)return;
 		var uo=container.unit;
+		if(!uo)return;
 		container=defensive.GetComponent<SmrUnitContainer>();
 		if(!container)return;
 		var ud=container.unit;

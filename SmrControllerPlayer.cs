@@ -11,6 +11,7 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 	public SpawnHere spawnerMinion;
 	public bool isReady;
 	public bool isSpawning;
+	public float cdSpawning=5;
 	public int money;
 	public int leadership=3;
 	public string party;
@@ -41,7 +42,12 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		countSumUnits+=1;
 		//unit.name="Unit "+(photonPlayer!=null?photonPlayer.name:"npc") +" "+countSumUnits;
 		unit.applyParty(party);
-		if(isHero)heroSetup(unit);
+		if(isHero){
+			heroSetup(unit);
+		}else{
+			var minion=unit.GetComponent<SmrControllerUnitMinions>();
+			minion.setup(hero);
+		}
 		units.Add(unit);
 		return unit;
 	}
@@ -52,22 +58,23 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		}
 	}
 	public void heroMove(Vector3 pos){
-		this.pos=pos;
-		cHero.targetPersitant=gameObject;
+		//this.pos=pos;
+		hero.target.transform.position=pos;
 		hero.toggleMove=true;
-		heroConstraint.target=gameObject.transform;
+		//heroConstraint.target=gameObject.transform;
 	}
 	public void heroFight(Vector3 pos){
-		this.pos=pos;
-		cHero.targetPersitant=null;
+		//this.pos=pos;
+		// Debug.Log(hero.transform.position);
+		hero.target.transform.position=hero.formation.transform.position;
 		hero.toggleMove=false;
 	}
 	public void heroSetup(SmrControllerUnit unit){
 		hero=unit.GetComponent<SmrControllerUnitHero>();
 		hero.transform.position=transform.position+Vector3.up*3;
-		cHero=hero.GetComponent<TrnthCreature>();
-		heroConstraint=hero.GetComponent<PathologicalGames.SmoothLookAtConstraint>();
-		heroConstraint.target=this.transform;
+		//hero=hero.GetComponent<TrnthCreature>();
+		//heroConstraint=hero.GetComponent<PathologicalGames.SmoothLookAtConstraint>();
+		// heroConstraint.target=this.transform;
 		foreach(var spawner in new SpawnHere[]{spawnerHero,spawnerMinion}){
 			spawner.transform.parent=hero.transform;			
 			spawner.transform.localPosition=Vector3.up*3;
@@ -76,17 +83,8 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 	// private
 	TrnthCreature cHero;
 	PathologicalGames.SmoothLookAtConstraint heroConstraint;
-	TRNTH.Alarm a=new TRNTH.Alarm();
 	int countSumUnits;
 
-	void OnDestroy(){
-	}
-	public override void Awake(){
-		// foreach(var spawner in new SpawnHere[]{spawnerHero,spawnerMinion}){
-		// 	spawner.transform.position=Vector3.up*3+pos;
-		// 	spawner.transform.parent=tra;			
-		// }
-	}
 	void Start(){
 		Invoke("spawn",0);		
 	}
@@ -97,6 +95,6 @@ public class SmrControllerPlayer : TRNTH.PoolBase {
 		}
 		units=list;
 		if(units.Count<leadership)sr.requestUnitCreate(name);
-		if(isSpawning)Invoke("spawn",5);
+		if(isSpawning)Invoke("spawn",cdSpawning);
 	}
 }

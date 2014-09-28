@@ -18,4 +18,7 @@ public class SmrFomation : TrnthMonoBehaviour {
 			}			
 		}
 	}
+	void Start(){
+		execute();
+	}
 }
